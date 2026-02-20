@@ -1,0 +1,233 @@
+# API Specification Templates (OpenAPI)
+
+openapi: 3.0.3
+info:
+  title: Credit Card Core API
+  version: 1.0.0
+  description: クレジットカードコアシステム API
+
+servers:
+  - url: https://api.creditcard.example.com/api/v1
+    description: Production
+  - url: http://localhost:8080/api/v1
+    description: Development
+
+paths:
+  /credit/authorize:
+    post:
+      summary: オーソリゼーション（与信確保）
+      operationId: authorize
+      tags:
+        - Credit Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthorizationRequest'
+      responses:
+        '200':
+          description: 承認成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationResponse'
+        '400':
+          description: 承認失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /credit/capture:
+    post:
+      summary: 売上請求（キャプチャ）
+      operationId: capture
+      tags:
+        - Credit Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CaptureRequest'
+      responses:
+        '200':
+          description: 請求成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CaptureResponse'
+
+  /credit/void:
+    post:
+      summary: 取引取消
+      operationId: voidTransaction
+      tags:
+        - Credit Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidRequest'
+      responses:
+        '200':
+          description: 取消成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoidResponse'
+
+  /members/{memberNumber}:
+    get:
+      summary: 会員情報取得
+      operationId: getMember
+      tags:
+        - Member Management
+      parameters:
+        - name: memberNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 会員情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+
+  /billings/{billingMonth}:
+    get:
+      summary: 請求情報取得
+      operationId: getBilling
+      tags:
+        - Billing
+      parameters:
+        - name: billingMonth
+          in: path
+          required: true
+          schema:
+            type: string
+            format: YYYY-MM
+      responses:
+        '200':
+          description: 請求情報
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Billing'
+
+components:
+  schemas:
+    AuthorizationRequest:
+      type: object
+      required:
+        - memberNumber
+        - amount
+        - merchantName
+        - merchantCategory
+      properties:
+        memberNumber:
+          type: string
+          pattern: '^M[0-9]{9}$'
+        amount:
+          type: number
+          minimum: 1
+        merchantName:
+          type: string
+        merchantCategory:
+          type: string
+
+    AuthorizationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transactionId:
+          type: string
+        authorizationCode:
+          type: string
+        status:
+          type: string
+        errorMessage:
+          type: string
+
+    CaptureRequest:
+      type: object
+      required:
+        - transactionId
+        - amount
+      properties:
+        transactionId:
+          type: string
+        amount:
+          type: number
+
+    CaptureResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transactionId:
+          type: string
+        status:
+          type: string
+
+    VoidRequest:
+      type: object
+      required:
+        - transactionId
+      properties:
+        transactionId:
+          type: string
+
+    VoidResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transactionId:
+          type: string
+
+    Member:
+      type: object
+      properties:
+        memberNumber:
+          type: string
+        nameKanji:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+        creditLimit:
+          type: number
+
+    Billing:
+      type: object
+      properties:
+        billingId:
+          type: string
+        memberNumber:
+          type: string
+        billingMonth:
+          type: string
+        billingAmount:
+          type: number
+        dueDate:
+          type: string
+          format: date
+
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: string
+        errorMessage:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

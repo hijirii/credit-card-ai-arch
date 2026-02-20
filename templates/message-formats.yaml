@@ -1,0 +1,184 @@
+# Message Format Templates (YAML)
+
+## Authorization Request
+AUTH_REQUEST:
+  version: "1.0"
+  description: "与信確保要求メッセージ"
+  required_fields:
+    - transaction_id
+    - member_number
+    - amount
+    - merchant_id
+    - merchant_name
+    - transaction_datetime
+  fields:
+    transaction_id:
+      type: string
+      pattern: "^TX[0-9]{17}$"
+      description: "取引ID"
+    member_number:
+      type: string
+      pattern: "^M[0-9]{9}$"
+      description: "会員番号"
+    amount:
+      type: decimal
+      min: 1
+      max: 10000000
+      description: "請求金額"
+    currency:
+      type: string
+      default: "JPY"
+      enum: ["JPY", "USD", "EUR"]
+      description: "通貨"
+    merchant_id:
+      type: string
+      description: "加盟店ID"
+    merchant_name:
+      type: string
+      max_length: 100
+      description: "加盟店名"
+    merchant_category:
+      type: string
+      description: "業種コード"
+    terminal_id:
+      type: string
+      description: "端末ID"
+    transaction_datetime:
+      type: datetime
+      format: "ISO8601"
+      description: "取引日時"
+
+## Authorization Response
+AUTH_RESPONSE:
+  version: "1.0"
+  description: "与信確保応答メッセージ"
+  required_fields:
+    - transaction_id
+    - response_code
+    - authorization_code
+    - approval_datetime
+  fields:
+    transaction_id:
+      type: string
+      description: "取引ID"
+    response_code:
+      type: string
+      enum:
+        - "00": "承認"
+        - "01": "再試行"
+        - "02": "無効な取引"
+        - "05": "限度額超過"
+        - "12": "無効な取引"
+        - "30": "フォーマットエラー"
+        - "41": "カード流失"
+        - "43": "カード盗用"
+        - "51": "与信限度額超過"
+        - "54": "有効期限切れ"
+      description: "応答コード"
+    response_message:
+      type: string
+      max_length: 100
+      description: "応答メッセージ"
+    authorization_code:
+      type: string
+      length: 6
+      description: "承認番号"
+    approval_datetime:
+      type: datetime
+      format: "ISO8601"
+      description: "承認日時"
+    settle_flag:
+      type: boolean
+      default: false
+      description: "清算フラグ"
+
+## Capture Request
+CAPTURE_REQUEST:
+  version: "1.0"
+  description: "売上請求要求メッセージ"
+  required_fields:
+    - original_transaction_id
+    - capture_amount
+  fields:
+    original_transaction_id:
+      type: string
+      description: "元取引ID"
+    capture_amount:
+      type: decimal
+      description: "請求金額"
+    capture_datetime:
+      type: datetime
+      format: "ISO8601"
+      description: "請求日時"
+
+## Billing Message
+BILLING:
+  version: "1.0"
+  description: "月次請求メッセージ"
+  required_fields:
+    - billing_id
+    - member_number
+    - billing_month
+    - billing_amount
+    - due_date
+  fields:
+    billing_id:
+      type: string
+      pattern: "^BL[0-9]{8}$"
+      description: "請求ID"
+    member_number:
+      type: string
+      description: "会員番号"
+    billing_month:
+      type: date
+      format: "YYYY-MM"
+      description: "請求年月"
+    billing_amount:
+      type: decimal
+      description: "請求金額"
+    minimum_payment:
+      type: decimal
+      description: "最小支払額"
+    previous_balance:
+      type: decimal
+      description: "前回残高"
+    new_charges:
+      type: decimal
+      description: "新規利用額"
+    payments:
+      type: decimal
+      description: "支払額"
+    adjustments:
+      type: decimal
+      description: "調整額"
+    due_date:
+      type: date
+      description: "支払期日"
+
+## Error Response
+ERROR_RESPONSE:
+  version: "1.0"
+  description: "エラーレスポンス"
+  required_fields:
+    - error_code
+    - error_message
+  fields:
+    error_code:
+      type: string
+      description: "エラーコード"
+    error_message:
+      type: string
+      description: "エラーメッセージ"
+    error_details:
+      type: array
+      items:
+        type: object
+        properties:
+          field:
+            type: string
+          message:
+            type: string
+      description: "エラー詳細"
+    timestamp:
+      type: datetime
+      description: "エラー発生日時"
